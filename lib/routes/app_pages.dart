@@ -51,7 +51,7 @@ class AppPages {
       transition: Transition.zoom,
       transitionDuration: const Duration(milliseconds: 300),
     ),
-
+    // หน้า Create Transaction สร้างเสร็จแล้ว โดย Sakkarin สามารถเอาไปดูเป้นตัวอย่างได้
     GetPage(
       name: AppRoutes.createTransaction,
       page: () => const CreateTransactionPage(),
