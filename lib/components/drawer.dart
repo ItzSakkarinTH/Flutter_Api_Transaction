@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'package:http/http.dart';
+import '../routes/app_routes.dart';
 import '../controllers/auth_controller.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -45,12 +46,22 @@ class AppDrawer extends StatelessWidget {
             ListTile(
               leading: Icon(Icons.home),
               title: Text("Home"),
-              onTap: () {},
+              onTap: () async {
+                Navigator.pop(context);
+                if (Get.currentRoute != '/home') {
+                  // รอให้ drawer ปิดก่อน
+                  await Future.delayed(Duration(milliseconds: 250));
+                  Get.toNamed('/home', preventDuplicates: true);
+                }
+              },
             ),
             ListTile(
               leading: Icon(Icons.account_box),
-              title: Text("About"),
-              onTap: () {},
+              title: Text("Create Transaction"),
+              onTap: () {
+                Navigator.pop(context); // ปิด Drawer ก่อน
+                Get.toNamed(AppRoutes.createTransaction);
+              },
             ),
             ListTile(
               leading: Icon(Icons.grid_3x3_outlined),

@@ -6,6 +6,7 @@ import '../screens/login.dart';
 import '../screens/regis.dart';
 import '../screens/forget_pass.dart';
 import '../screens/home.dart';
+import '../screens/create_transaction.dart';
 
 class AppPages {
   AppPages._();
@@ -50,13 +51,12 @@ class AppPages {
       transition: Transition.zoom,
       transitionDuration: const Duration(milliseconds: 300),
     ),
-    /*
+
     GetPage(
-      name: AppRoutes.PROFILE,
-      page: () => const ProfileScreen(),
+      name: AppRoutes.createTransaction,
+      page: () => const CreateTransactionPage(),
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 300),
     ),
-    */
   ];
 }
