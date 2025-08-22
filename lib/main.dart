@@ -117,7 +117,7 @@ class MainApp extends StatelessWidget {
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.red[600]!, width: 2.0),
+            borderSide: BorderSide(color: const Color.fromARGB(255, 220, 41, 38)!, width: 2.0),
           ),
           fillColor: Colors.grey[50],
           filled: true,
