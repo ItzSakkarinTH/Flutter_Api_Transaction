@@ -57,16 +57,19 @@ class AppDrawer extends StatelessWidget {
             ),
             ListTile(
               leading: Icon(Icons.account_box),
+              title: Text("ShowAll Transaction"),
+              onTap: () {
+                Navigator.pop(context); // ปิด Drawer ก่อน
+                Get.toNamed(AppRoutes.showAllTransaction);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.grid_3x3_outlined),
               title: Text("Create Transaction"),
               onTap: () {
                 Navigator.pop(context); // ปิด Drawer ก่อน
                 Get.toNamed(AppRoutes.createTransaction);
               },
-            ),
-            ListTile(
-              leading: Icon(Icons.grid_3x3_outlined),
-              title: Text("Products"),
-              onTap: () {},
             ),
             ListTile(
               leading: Icon(Icons.contact_mail),
