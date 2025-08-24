@@ -6,6 +6,7 @@ import '../screens/login.dart';
 import '../screens/regis.dart';
 import '../screens/forget_pass.dart';
 import '../screens/home.dart';
+import '../screens/delete_transaction.dart';
 
 class AppPages {
   AppPages._();
@@ -48,6 +49,14 @@ class AppPages {
       name: AppRoutes.home,
       page: () => const HomeScreen(),
       transition: Transition.zoom,
+      transitionDuration: const Duration(milliseconds: 300),
+    ),
+
+    // Delete Transaction Page
+    GetPage(
+      name: AppRoutes.deleteTransaction,
+      page: () => const DeleteTransactionScreen(),
+      transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 300),
     ),
     /*
