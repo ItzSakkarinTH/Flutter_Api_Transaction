@@ -1,82 +1,145 @@
+import 'dart:convert';
 import 'package:get/get.dart';
-import 'package:flutter/material.dart';
-import '../services/transaction_service.dart';
+import '../services/api_client.dart';
+import '../services/storage_service.dart';
 
 class TransactionController extends GetxController {
-  final TransactionService _transactionService = TransactionService();
+  final ApiClient _api = Get.find<ApiClient>();
+  final StorageService _storage = Get.find<StorageService>();
 
-  // Observable lists สำหรับเก็บรายการ
-  var transactions = <Map<String, dynamic>>[].obs;
-  var isLoading = false.obs;
+  final isBusy = false.obs;
+  final items = <Map<String, dynamic>>[].obs;
 
-  // สร้างรายการใหม่
-  Future<bool> createTransaction(Map<String, dynamic> transaction) async {
+  // Alias getters for compatibility
+  RxBool get isLoading => isBusy;
+  RxList<Map<String, dynamic>> get transactions => items;
+
+  @override
+  Future<void> onReady() async {
+    super.onReady();
+    // ✅ บังคับให้รอ Storage พร้อมก่อนเสมอ
+    await _storage.ready();
+    // จากนั้นค่อยยิง API
+    await fetchTransactions();
+  }
+
+  Future<void> fetchTransactions() async {
+    isBusy.value = true;
     try {
-      isLoading.value = true;
+      final res = await _api.get('/api/transaction');
+      
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        
+        if (data is List) {
+          items.assignAll(List<Map<String, dynamic>>.from(data));
+        } else if (data is Map && data['data'] is List) {
+          items.assignAll(List<Map<String, dynamic>>.from(data['data']));
+        }
+      }
+    } on UnauthorizedException {
+      // Handle unauthorized
+    } catch (_) {
+      // Handle other errors
+    } finally {
+      isBusy.value = false;
+    }
+  }
 
-      final result = await _transactionService.createTransaction(transaction);
+  Future<bool> createTransaction({
+    required String name,
+    required String desc,
+    required double amount,
+    required int type, // -1 expense, 1 income
+    required DateTime date,
+  }) async {
+    isBusy.value = true;
+    try {
+      await _storage.ready(); // ✅ กันเคสกดปุ่มเร็วกว่า service พร้อม
+      final payload = {
+        'name': name,
+        'desc': desc,
+        'amount': amount,
+        'type': type,
+        'date': _dateStr(date),
+      };
 
-      if (result['success']) {
-        // เพิ่มรายการใหม่เข้าไปใน list
-        transactions.add(result['data']);
+      final res = await _api.post('/api/transaction', body: payload);
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        // อัปเดตหน้ารายการ
+        await fetchTransactions();
         return true;
       } else {
-        Get.snackbar(
-          'ข้อผิดพลาด',
-          result['message'] ?? 'ไม่สามารถบันทึกรายการได้',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        // print('createTransaction error: ${res.statusCode} ${res.body}');
         return false;
       }
-    } catch (e) {
-      print('Error creating transaction: $e');
-      Get.snackbar(
-        'ข้อผิดพลาด',
-        'เกิดข้อผิดพลาดในการเชื่อมต่อ',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    } on UnauthorizedException {
+      // Get.offAllNamed(Routes.LOGIN);
+      return false;
+    } catch (_) {
       return false;
     } finally {
-      isLoading.value = false;
+      isBusy.value = false;
     }
   }
 
-  // ดึงรายการทั้งหมด
-  Future<void> fetchTransactions() async {
-    try {
-      isLoading.value = true;
-      final result = await _transactionService.getTransactions();
-
-      if (result['success']) {
-        transactions.assignAll(result['data']);
-      }
-    } catch (e) {
-      print('Error fetching transactions: $e');
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  // ลบรายการ
   Future<bool> deleteTransaction(String id) async {
+    isBusy.value = true;
     try {
-      isLoading.value = true;
-      final result = await _transactionService.deleteTransaction(id);
+      await _storage.ready();
+      final res = await _api.delete('/api/transaction/$id');
 
-      if (result['success']) {
-        transactions.removeWhere((transaction) => transaction['id'] == id);
+      if (res.statusCode == 200 || res.statusCode == 204) {
+        await fetchTransactions();
         return true;
+      } else {
+        return false;
       }
+    } on UnauthorizedException {
       return false;
-    } catch (e) {
-      print('Error deleting transaction: $e');
+    } catch (_) {
       return false;
     } finally {
-      isLoading.value = false;
+      isBusy.value = false;
     }
   }
+
+  Future<bool> updateTransaction({
+    required String uuid,
+    required String name,
+    required String desc,
+    required double amount,
+    required int type,
+    required DateTime date,
+  }) async {
+    isBusy.value = true;
+    try {
+      await _storage.ready();
+      final payload = {
+        'name': name,
+        'desc': desc,
+        'amount': amount,
+        'type': type,
+        'date': _dateStr(date),
+      };
+
+      final res = await _api.put('/api/transaction/$uuid', body: payload);
+
+      if (res.statusCode == 200) {
+        await fetchTransactions();
+        return true;
+      } else {
+        return false;
+      }
+    } on UnauthorizedException {
+      return false;
+    } catch (_) {
+      return false;
+    } finally {
+      isBusy.value = false;
+    }
+  }
+
+  String _dateStr(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }

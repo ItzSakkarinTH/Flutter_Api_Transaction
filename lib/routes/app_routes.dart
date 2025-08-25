@@ -11,6 +11,7 @@ abstract class AppRoutes {
   static const createTransaction = '/create-transaction'; // สำหรับในอนาคต
   static const showAllTransaction = '/show-all-transaction'; // สำหรับในอนาคต
   static const deleteTransaction = '/delete-transaction';
+  static const editTransaction = '/edit-transaction';
 
   // Helper methods สำหรับการนำทาง
   static String getSplashRoute() => splash;
@@ -22,4 +23,5 @@ abstract class AppRoutes {
   static String getCreateTransactionRoute() => createTransaction;
   static String getShowAllTransactionRoute() => showAllTransaction;
   static String getDeleteTransactionRoute() => deleteTransaction;
+  static String getEditTransactionRoute() => editTransaction;
 }

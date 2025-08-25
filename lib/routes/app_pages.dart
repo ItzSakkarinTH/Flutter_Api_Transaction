@@ -8,6 +8,7 @@ import '../screens/forget_pass.dart';
 import '../screens/home.dart';
 import '../screens/create_transaction.dart';
 import '../screens/show_all_transaction.dart';
+import '../screens/edit_transaction.dart';
 
 class AppPages {
   AppPages._();
@@ -63,6 +64,13 @@ class AppPages {
     GetPage(
       name: AppRoutes.showAllTransaction,
       page: () => const ShowAllTransactionPage(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 300),
+    ),
+    // หน้า Edit Transaction
+    GetPage(
+      name: AppRoutes.editTransaction,
+      page: () => const EditTransactionPage(),
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 300),
     ),

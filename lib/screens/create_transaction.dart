@@ -77,7 +77,11 @@ class _CreateTransactionPageState extends State<CreateTransactionPage> {
 
       // ส่งข้อมูลไป API
       final success = await transactionController.createTransaction(
-        transaction,
+        name: _nameController.text.trim(),
+        desc: _descController.text.trim(),
+        amount: double.parse(_amountController.text),
+        type: _selectedType!,
+        date: _selectedDate,
       );
 
       if (success) {
@@ -378,7 +382,7 @@ class _CreateTransactionPageState extends State<CreateTransactionPage> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: transactionController.isLoading.value
+                      onPressed: transactionController.isBusy.value
                           ? null
                           : _submitTransaction, // ปิดปุ่มเมื่อ loading
                       style: ElevatedButton.styleFrom(
@@ -389,7 +393,7 @@ class _CreateTransactionPageState extends State<CreateTransactionPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: transactionController.isLoading.value
+                      child: transactionController.isBusy.value
                           ? CircularProgressIndicator(color: Colors.white)
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,

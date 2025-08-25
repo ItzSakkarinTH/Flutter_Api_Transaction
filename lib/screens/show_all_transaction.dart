@@ -27,15 +27,14 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
   }
 
   void _initServicesAndLoadTransactions() async {
-    // ตรวจสอบและ init StorageService
-    if (!Get.isRegistered<StorageService>()) {
-      final storageService = StorageService();
-      await storageService.init(); // รอจนเสร็จ
-      Get.put(storageService);
+    // StorageService ถูก init แล้วใน main.dart แล้ว
+    
+    // ตรวจสอบว่ามี TransactionController แล้วหรือไม่
+    if (!Get.isRegistered<TransactionController>()) {
+      transactionController = Get.put(TransactionController());
+    } else {
+      transactionController = Get.find<TransactionController>();
     }
-
-    // สร้าง TransactionController หลัง StorageService init เสร็จ
-    transactionController = Get.put(TransactionController());
 
     // โหลดข้อมูล transactions
     await _loadTransactions();
@@ -47,7 +46,7 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
 
   List<Map<String, dynamic>> get _filteredTransactions {
     List<Map<String, dynamic>> filtered = List.from(
-      transactionController.transactions,
+      transactionController.items,
     );
 
     // Filter by type
@@ -80,13 +79,13 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
   }
 
   double get _totalIncome {
-    return transactionController.transactions
+    return transactionController.items
         .where((t) => t['type'] == 1)
         .fold(0.0, (sum, t) => sum + (t['amount'] as num).toDouble());
   }
 
   double get _totalExpense {
-    return transactionController.transactions
+    return transactionController.items
         .where((t) => t['type'] == -1)
         .fold(0.0, (sum, t) => sum + (t['amount'] as num).toDouble());
   }
@@ -414,28 +413,65 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Navigate to edit transaction page
-              print('Edit transaction: ${transaction['id']}');
+              Get.toNamed(AppRoutes.editTransaction, arguments: transaction);
             },
             child: Text('แก้ไข'),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
-              // ลบรายการ
-              if (transaction['id'] != null) {
-                final success = await transactionController.deleteTransaction(
-                  transaction['id'].toString(),
-                );
-                if (success) {
+              // แสดง confirmation dialog
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text('ยืนยันการลบ'),
+                  content: Text('คุณต้องการลบรายการนี้หรือไม่?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: Text('ยกเลิก'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      child: Text('ลบ', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              );
+              
+              if (confirmed == true) {
+                final transactionUuid = transaction['uuid'];
+                
+                if (transactionUuid != null) {
+                  final success = await transactionController.deleteTransaction(
+                    transactionUuid.toString(),
+                  );
+                  if (success) {
+                    Get.snackbar(
+                      'สำเร็จ',
+                      'ลบรายการเรียบร้อย',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.green,
+                      colorText: Colors.white,
+                    );
+                  } else {
+                    Get.snackbar(
+                      'ข้อผิดพลาด',
+                      'ไม่สามารถลบรายการได้',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                  }
+                } else {
                   Get.snackbar(
-                    'สำเร็จ',
-                    'ลบรายการเรียบร้อย',
+                    'ข้อผิดพลาด',
+                    'ไม่พบ UUID ของรายการ',
                     snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: Colors.green,
+                    backgroundColor: Colors.orange,
                     colorText: Colors.white,
                   );
-                  setState(() {}); // รีเฟรช UI
                 }
               }
             },
@@ -489,7 +525,7 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
       body: Obx(() {
         final filteredTransactions = _filteredTransactions;
 
-        if (transactionController.isLoading.value) {
+        if (transactionController.isBusy.value) {
           return Center(child: CircularProgressIndicator());
         }
 
@@ -546,7 +582,7 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
                             ),
                             SizedBox(height: 16),
                             Text(
-                              transactionController.transactions.isEmpty
+                              transactionController.items.isEmpty
                                   ? 'ยังไม่มีรายการใดๆ'
                                   : 'ไม่มีรายการที่ตรงกับเงื่อนไข',
                               style: TextStyle(

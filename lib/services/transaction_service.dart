@@ -1,29 +1,14 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../services/storage_service.dart';
+import 'package:get/get.dart';
+import '../services/api_client.dart';
 
 class TransactionService {
-  static const String baseUrl = 'https://transactions-cs.vercel.app';
-  final StorageService storage = StorageService();
-
-  // Headers พื้นฐาน
-  Map<String, String> get headers => {
-    'Content-Type': 'application/json',
-    if (storage.getToken() != null) 
-      'Authorization': 'Bearer ${storage.getToken()}',
-  };
+  final ApiClient _api = Get.find<ApiClient>();
 
   // สร้างรายการใหม่
   Future<Map<String, dynamic>> createTransaction(Map<String, dynamic> transaction) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/transactions'),
-        headers: headers,
-        body: jsonEncode(transaction),
-      );
-
-      print('Response Status: ${response.statusCode}');
-      print('Response Body: ${response.body}');
+      final response = await _api.post('/api/transactions', body: transaction);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
@@ -40,7 +25,6 @@ class TransactionService {
         };
       }
     } catch (e) {
-      print('Service Error: $e');
       return {
         'success': false,
         'message': 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้'
@@ -51,10 +35,7 @@ class TransactionService {
   // ดึงรายการทั้งหมด
   Future<Map<String, dynamic>> getTransactions() async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/transactions'),
-        headers: headers,
-      );
+      final response = await _api.get('/api/transactions');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -69,7 +50,6 @@ class TransactionService {
         };
       }
     } catch (e) {
-      print('Error fetching transactions: $e');
       return {
         'success': false,
         'message': 'เกิดข้อผิดพลาดในการเชื่อมต่อ'
@@ -80,10 +60,7 @@ class TransactionService {
   // ลบรายการ
   Future<Map<String, dynamic>> deleteTransaction(String id) async {
     try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/api/transactions/$id'),
-        headers: headers,
-      );
+      final response = await _api.delete('/api/transactions/$id');
 
       if (response.statusCode == 200) {
         return {
@@ -97,7 +74,6 @@ class TransactionService {
         };
       }
     } catch (e) {
-      print('Error deleting transaction: $e');
       return {
         'success': false,
         'message': 'เกิดข้อผิดพลาดในการลบ'
@@ -108,11 +84,7 @@ class TransactionService {
   // อัพเดทรายการ
   Future<Map<String, dynamic>> updateTransaction(String id, Map<String, dynamic> transaction) async {
     try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/api/transactions/$id'),
-        headers: headers,
-        body: jsonEncode(transaction),
-      );
+      final response = await _api.put('/api/transactions/$id', body: transaction);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -128,7 +100,6 @@ class TransactionService {
         };
       }
     } catch (e) {
-      print('Error updating transaction: $e');
       return {
         'success': false,
         'message': 'เกิดข้อผิดพลาดในการอัพเดท'
