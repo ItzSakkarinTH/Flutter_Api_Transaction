@@ -8,6 +8,8 @@ abstract class AppRoutes {
   static const forgetPassword = '/forget-password';
   static const home = '/home'; // สำหรับในอนาคต
   static const profile = '/profile'; // สำหรับในอนาคต
+  static const createTransaction = '/create-transaction'; // สำหรับในอนาคต
+  static const showAllTransaction = '/show-all-transaction'; // สำหรับในอนาคต
   static const deleteTransaction = '/delete-transaction';
 
   // Helper methods สำหรับการนำทาง
@@ -17,5 +19,7 @@ abstract class AppRoutes {
   static String getForgetPasswordRoute() => forgetPassword;
   static String getHomeRoute() => home;
   static String getProfileRoute() => profile;
+  static String getCreateTransactionRoute() => createTransaction;
+  static String getShowAllTransactionRoute() => showAllTransaction;
   static String getDeleteTransactionRoute() => deleteTransaction;
 }
