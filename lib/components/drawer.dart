@@ -72,11 +72,21 @@ class AppDrawer extends StatelessWidget {
                 Get.toNamed(AppRoutes.createTransaction);
               },
             ),
-
             ListTile(
-              leading: Icon(Icons.contact_mail),
-              title: Text("Contact"),
-              onTap: () {},
+              leading: Icon(Icons.grid_3x3_outlined),
+              title: Text("Edit Transaction"),
+              onTap: () {
+                Navigator.pop(context); // ปิด Drawer ก่อน
+                Get.toNamed(AppRoutes.editTransaction);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.delete),
+              title: Text("Delete Transaction"),
+              onTap: () {
+                Navigator.pop(context); // ปิด Drawer ก่อน
+                Get.toNamed(AppRoutes.deleteTransaction);
+              },
             ),
             ListTile(
               leading: Icon(Icons.logout),
