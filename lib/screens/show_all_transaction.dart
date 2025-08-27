@@ -18,7 +18,8 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
   String _sortBy = 'date'; // date, amount, name
   bool _isAscending = false;
 
-  late TransactionController transactionController = Get.find<TransactionController>();
+  late TransactionController transactionController =
+      Get.find<TransactionController>();
 
   @override
   void initState() {
@@ -28,7 +29,7 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
 
   void _initServicesAndLoadTransactions() async {
     // StorageService ถูก init แล้วใน main.dart แล้ว
-    
+
     // ตรวจสอบว่ามี TransactionController แล้วหรือไม่
     if (!Get.isRegistered<TransactionController>()) {
       transactionController = Get.put(TransactionController());
@@ -433,16 +434,18 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
                     ),
                     ElevatedButton(
                       onPressed: () => Navigator.pop(context, true),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
                       child: Text('ลบ', style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
               );
-              
+
               if (confirmed == true) {
                 final transactionUuid = transaction['uuid'];
-                
+
                 if (transactionUuid != null) {
                   final success = await transactionController.deleteTransaction(
                     transactionUuid.toString(),
@@ -451,7 +454,7 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
                     Get.snackbar(
                       'สำเร็จ',
                       'ลบรายการเรียบร้อย',
-                      snackPosition: SnackPosition.BOTTOM,
+                      snackPosition: SnackPosition.TOP,
                       backgroundColor: Colors.green,
                       colorText: Colors.white,
                     );
@@ -459,7 +462,7 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
                     Get.snackbar(
                       'ข้อผิดพลาด',
                       'ไม่สามารถลบรายการได้',
-                      snackPosition: SnackPosition.BOTTOM,
+                      snackPosition: SnackPosition.TOP,
                       backgroundColor: Colors.red,
                       colorText: Colors.white,
                     );
@@ -468,7 +471,7 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
                   Get.snackbar(
                     'ข้อผิดพลาด',
                     'ไม่พบ UUID ของรายการ',
-                    snackPosition: SnackPosition.BOTTOM,
+                    snackPosition: SnackPosition.TOP,
                     backgroundColor: Colors.orange,
                     colorText: Colors.white,
                   );
