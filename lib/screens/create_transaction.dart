@@ -84,12 +84,8 @@ class _CreateTransactionPageState extends State<CreateTransactionPage> {
         date: _selectedDate,
       );
 
-      print('API Response: $success'); // เพิ่ม debug log
-
       if (success) {
         // แสดง success message
-
-        print('Showing success snackbar'); // เพิ่ม debug log
 
         Get.snackbar(
           '✅ สำเร็จ',
