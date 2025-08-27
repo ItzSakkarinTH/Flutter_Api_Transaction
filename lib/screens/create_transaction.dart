@@ -84,14 +84,22 @@ class _CreateTransactionPageState extends State<CreateTransactionPage> {
         date: _selectedDate,
       );
 
+      print('API Response: $success'); // เพิ่ม debug log
+
       if (success) {
         // แสดง success message
+
+        print('Showing success snackbar'); // เพิ่ม debug log
+
         Get.snackbar(
-          'สำเร็จ',
-          'บันทึกรายการเรียบร้อย',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
+          '✅ สำเร็จ',
+          'บันทึกรายการเรียบร้อยแล้ว ขอบคุณที่ใช้งาน!',
+          backgroundColor: Colors.white,
+          colorText: Colors.blue[800],
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 2),
+          borderRadius: 15,
+          margin: const EdgeInsets.all(20),
         );
 
         // รีเซ็ตฟอร์ม
@@ -104,8 +112,10 @@ class _CreateTransactionPageState extends State<CreateTransactionPage> {
           _selectedDate = DateTime.now();
         });
 
-        // กลับไปหน้าก่อนหน้า
-        Get.back();
+        // รอให้ snackbar แสดงก่อน แล้วค่อยกลับ
+        Future.delayed(Duration(seconds: 2), () {
+          Get.back();
+        });
       }
     }
   }

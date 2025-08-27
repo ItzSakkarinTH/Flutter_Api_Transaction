@@ -20,10 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text(
           'หน้าหลัก',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
         ),
         backgroundColor: Colors.blue[800],
         elevation: 0,
@@ -33,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
       drawer: AppDrawer(),
       body: Obx(() {
         final user = authController.currentUser;
-        
+
         return Container(
           width: double.infinity,
           height: double.infinity,
@@ -41,16 +38,13 @@ class _HomeScreenState extends State<HomeScreen> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Colors.blue[800]!,
-                Colors.blue[600]!,
-                Colors.blue[400]!,
-              ],
+              colors: [Colors.blue[800]!, Colors.blue[600]!, Colors.blue[400]!],
               stops: const [0.0, 0.5, 1.0],
             ),
           ),
           child: SafeArea(
-            child: SingleChildScrollView( // ✅ แก้ไข: เพิ่ม scroll ป้องกัน overflow
+            child: SingleChildScrollView(
+              // ✅ แก้ไข: เพิ่ม scroll ป้องกัน overflow
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -113,21 +107,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       // Floating sparkles
-                      Positioned(
-                        top: 20,
-                        right: 30,
-                        child: _buildSparkle(12),
-                      ),
-                      Positioned(
-                        bottom: 30,
-                        left: 25,
-                        child: _buildSparkle(8),
-                      ),
-                      Positioned(
-                        top: 60,
-                        left: 15,
-                        child: _buildSparkle(10),
-                      ),
+                      Positioned(top: 20, right: 30, child: _buildSparkle(12)),
+                      Positioned(bottom: 30, left: 25, child: _buildSparkle(8)),
+                      Positioned(top: 60, left: 15, child: _buildSparkle(10)),
                       Positioned(
                         bottom: 50,
                         right: 20,
@@ -135,9 +117,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 40),
-                  
+
                   // Welcome Text
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -158,9 +140,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 24,
@@ -183,9 +165,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ),
-                        
+
                         const SizedBox(height: 12),
-                        
+
                         Text(
                           user?.email ?? "",
                           style: TextStyle(
@@ -193,9 +175,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Colors.white.withOpacity(0.9),
                           ),
                         ),
-                        
+
                         const SizedBox(height: 50),
-                        
+
                         // Welcome Message
                         Container(
                           padding: const EdgeInsets.all(32),
@@ -244,9 +226,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-                        
+
                         const SizedBox(height: 40),
-                        
+
                         // Action Button
                         Container(
                           width: 200,
@@ -276,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 'ขอบคุณที่เข้าใช้งาน!',
                                 backgroundColor: Colors.white,
                                 colorText: Colors.blue[800],
-                                snackPosition: SnackPosition.BOTTOM,
+                                snackPosition: SnackPosition.TOP,
                                 duration: const Duration(seconds: 2),
                                 borderRadius: 15,
                                 margin: const EdgeInsets.all(20),
@@ -307,18 +289,30 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ),
-                        
+
                         const SizedBox(height: 30),
-                        
+
                         // Decorative elements at bottom
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            _buildFloatingIcon(Icons.star, Colors.yellow[300]!, -20),
+                            _buildFloatingIcon(
+                              Icons.star,
+                              Colors.yellow[300]!,
+                              -20,
+                            ),
                             const SizedBox(width: 40),
-                            _buildFloatingIcon(Icons.favorite, Colors.pink[300]!, 15),
+                            _buildFloatingIcon(
+                              Icons.favorite,
+                              Colors.pink[300]!,
+                              15,
+                            ),
                             const SizedBox(width: 40),
-                            _buildFloatingIcon(Icons.lightbulb, Colors.orange[300]!, -10),
+                            _buildFloatingIcon(
+                              Icons.lightbulb,
+                              Colors.orange[300]!,
+                              -10,
+                            ),
                           ],
                         ),
                       ],
@@ -332,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }),
     );
   }
-  
+
   Widget _buildFloatingIcon(IconData icon, Color color, double offset) {
     return Transform.translate(
       offset: Offset(0, offset),
@@ -342,10 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: color.withOpacity(0.2),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.3),
-            width: 2,
-          ),
+          border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -354,15 +345,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        child: Icon(
-          icon,
-          color: Colors.white.withOpacity(0.8),
-          size: 24,
-        ),
+        child: Icon(icon, color: Colors.white.withOpacity(0.8), size: 24),
       ),
     );
   }
-  
+
   Widget _buildSparkle(double size) {
     return Container(
       width: size,
