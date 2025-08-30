@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:form_validate/components/drawer.dart';
 import '../controllers/auth_controller.dart';
+import '../controllers/transaction_controller.dart';
+import '../services/storage_service.dart';
 import '../routes/app_routes.dart';
 
 class ShowAllTransactionPage extends StatefulWidget {
@@ -16,11 +18,37 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
   String _sortBy = 'date'; // date, amount, name
   bool _isAscending = false;
 
-  // ตัวอย่างข้อมูล transactions (ในจริงจะมาจาก API หรือ Database)
-  List<Map<String, dynamic>> _allTransactions = [];
+  late TransactionController transactionController =
+      Get.find<TransactionController>();
+
+  @override
+  void initState() {
+    super.initState();
+    _initServicesAndLoadTransactions();
+  }
+
+  void _initServicesAndLoadTransactions() async {
+    // StorageService ถูก init แล้วใน main.dart แล้ว
+
+    // ตรวจสอบว่ามี TransactionController แล้วหรือไม่
+    if (!Get.isRegistered<TransactionController>()) {
+      transactionController = Get.put(TransactionController());
+    } else {
+      transactionController = Get.find<TransactionController>();
+    }
+
+    // โหลดข้อมูล transactions
+    await _loadTransactions();
+  }
+
+  Future<void> _loadTransactions() async {
+    await transactionController.fetchTransactions();
+  }
 
   List<Map<String, dynamic>> get _filteredTransactions {
-    List<Map<String, dynamic>> filtered = List.from(_allTransactions);
+    List<Map<String, dynamic>> filtered = List.from(
+      transactionController.items,
+    );
 
     // Filter by type
     if (_selectedFilter == 'income') {
@@ -39,10 +67,10 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
           ).compareTo(DateTime.parse(b['date']));
           break;
         case 'amount':
-          result = a['amount'].compareTo(b['amount']);
+          result = (a['amount'] as num).compareTo(b['amount'] as num);
           break;
         case 'name':
-          result = a['name'].compareTo(b['name']);
+          result = a['name'].toString().compareTo(b['name'].toString());
           break;
       }
       return _isAscending ? result : -result;
@@ -52,15 +80,15 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
   }
 
   double get _totalIncome {
-    return _allTransactions
+    return transactionController.items
         .where((t) => t['type'] == 1)
-        .fold(0.0, (sum, t) => sum + t['amount']);
+        .fold(0.0, (sum, t) => sum + (t['amount'] as num).toDouble());
   }
 
   double get _totalExpense {
-    return _allTransactions
+    return transactionController.items
         .where((t) => t['type'] == -1)
-        .fold(0.0, (sum, t) => sum + t['amount']);
+        .fold(0.0, (sum, t) => sum + (t['amount'] as num).toDouble());
   }
 
   double get _balance => _totalIncome - _totalExpense;
@@ -280,7 +308,7 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
 
   Widget _buildTransactionItem(Map<String, dynamic> transaction) {
     final isIncome = transaction['type'] == 1;
-    final amount = transaction['amount'] as double;
+    final amount = (transaction['amount'] as num).toDouble();
 
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -302,15 +330,15 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
           ),
         ),
         title: Text(
-          transaction['name'],
+          transaction['name'] ?? 'ไม่มีชื่อ',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (transaction['desc'].isNotEmpty)
+            if ((transaction['desc'] ?? '').isNotEmpty)
               Text(
-                transaction['desc'],
+                transaction['desc'] ?? '',
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -321,14 +349,7 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
                 Icon(Icons.calendar_today, size: 12, color: Colors.grey),
                 SizedBox(width: 4),
                 Text(
-                  _formatDate(transaction['date']),
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-                SizedBox(width: 12),
-                Icon(Icons.label, size: 12, color: Colors.grey),
-                SizedBox(width: 4),
-                Text(
-                  transaction['category'],
+                  _formatDate(transaction['date'] ?? DateTime.now().toString()),
                   style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
               ],
@@ -366,10 +387,10 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDetailRow('ชื่อรายการ:', transaction['name']),
+            _buildDetailRow('ชื่อรายการ:', transaction['name'] ?? '-'),
             _buildDetailRow(
               'รายละเอียด:',
-              transaction['desc'].isEmpty ? '-' : transaction['desc'],
+              (transaction['desc'] ?? '').isEmpty ? '-' : transaction['desc'],
             ),
             _buildDetailRow(
               'ประเภท:',
@@ -377,10 +398,12 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
             ),
             _buildDetailRow(
               'จำนวนเงิน:',
-              _formatCurrency(transaction['amount']),
+              _formatCurrency((transaction['amount'] as num).toDouble()),
             ),
-            _buildDetailRow('วันที่:', _formatDate(transaction['date'])),
-            _buildDetailRow('หมวดหมู่:', transaction['category']),
+            _buildDetailRow(
+              'วันที่:',
+              _formatDate(transaction['date'] ?? DateTime.now().toString()),
+            ),
           ],
         ),
         actions: [
@@ -391,10 +414,72 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Navigate to edit transaction page
-              print('Edit transaction: ${transaction['id']}');
+              Get.toNamed(AppRoutes.editTransaction, arguments: transaction);
             },
             child: Text('แก้ไข'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              // แสดง confirmation dialog
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text('ยืนยันการลบ'),
+                  content: Text('คุณต้องการลบรายการนี้หรือไม่?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: Text('ยกเลิก'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
+                      child: Text('ลบ', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirmed == true) {
+                final transactionUuid = transaction['uuid'];
+
+                if (transactionUuid != null) {
+                  final success = await transactionController.deleteTransaction(
+                    transactionUuid.toString(),
+                  );
+                  if (success) {
+                    Get.snackbar(
+                      'สำเร็จ',
+                      'ลบรายการเรียบร้อย',
+                      snackPosition: SnackPosition.TOP,
+                      backgroundColor: Colors.green,
+                      colorText: Colors.white,
+                    );
+                  } else {
+                    Get.snackbar(
+                      'ข้อผิดพลาด',
+                      'ไม่สามารถลบรายการได้',
+                      snackPosition: SnackPosition.TOP,
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                  }
+                } else {
+                  Get.snackbar(
+                    'ข้อผิดพลาด',
+                    'ไม่พบ UUID ของรายการ',
+                    snackPosition: SnackPosition.TOP,
+                    backgroundColor: Colors.orange,
+                    colorText: Colors.white,
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('ลบ', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -421,8 +506,6 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredTransactions = _filteredTransactions;
-
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -431,6 +514,7 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(icon: Icon(Icons.refresh), onPressed: _loadTransactions),
           IconButton(
             icon: Icon(Icons.filter_list),
             onPressed: _showFilterBottomSheet,
@@ -441,80 +525,104 @@ class _ShowAllTransactionPageState extends State<ShowAllTransactionPage> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Summary Card
-          _buildSummaryCard(),
+      body: Obx(() {
+        final filteredTransactions = _filteredTransactions;
 
-          // Filter Info
-          if (_selectedFilter != 'all' || _sortBy != 'date')
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 16),
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.info, size: 16, color: Colors.blue[700]),
-                  SizedBox(width: 4),
-                  Text(
-                    'กรอง: ${_selectedFilter == 'all'
-                        ? 'ทั้งหมด'
-                        : _selectedFilter == 'income'
-                        ? 'รายรับ'
-                        : 'รายจ่าย'} | เรียง: ${_sortBy == 'date'
-                        ? 'วันที่'
-                        : _sortBy == 'amount'
-                        ? 'จำนวนเงิน'
-                        : 'ชื่อรายการ'}',
-                    style: TextStyle(fontSize: 12, color: Colors.blue[700]),
+        if (transactionController.isBusy.value) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        return RefreshIndicator(
+          onRefresh: _loadTransactions,
+          child: Column(
+            children: [
+              // Summary Card
+              _buildSummaryCard(),
+
+              // Filter Info
+              if (_selectedFilter != 'all' || _sortBy != 'date')
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 16),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                ],
-              ),
-            ),
-
-          SizedBox(height: 8),
-
-          // Transactions List
-          Expanded(
-            child: filteredTransactions.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.receipt_long, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text(
-                          'ไม่มีรายการที่ตรงกับเงื่อนไข',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        ElevatedButton.icon(
-                          onPressed: () => Get.toNamed('/create-transaction'),
-                          icon: Icon(Icons.add),
-                          label: Text('เพิ่มรายการใหม่'),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: EdgeInsets.only(bottom: 16),
-                    itemCount: filteredTransactions.length,
-                    itemBuilder: (context, index) {
-                      return _buildTransactionItem(filteredTransactions[index]);
-                    },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.info, size: 16, color: Colors.blue[700]),
+                      SizedBox(width: 4),
+                      Text(
+                        'กรอง: ${_selectedFilter == 'all'
+                            ? 'ทั้งหมด'
+                            : _selectedFilter == 'income'
+                            ? 'รายรับ'
+                            : 'รายจ่าย'} | เรียง: ${_sortBy == 'date'
+                            ? 'วันที่'
+                            : _sortBy == 'amount'
+                            ? 'จำนวนเงิน'
+                            : 'ชื่อรายการ'}',
+                        style: TextStyle(fontSize: 12, color: Colors.blue[700]),
+                      ),
+                    ],
                   ),
+                ),
+
+              SizedBox(height: 8),
+
+              // Transactions List
+              Expanded(
+                child: filteredTransactions.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.receipt_long,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              transactionController.items.isEmpty
+                                  ? 'ยังไม่มีรายการใดๆ'
+                                  : 'ไม่มีรายการที่ตรงกับเงื่อนไข',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            ElevatedButton.icon(
+                              onPressed: () =>
+                                  Get.toNamed('/create-transaction'),
+                              icon: Icon(Icons.add),
+                              label: Text('เพิ่มรายการใหม่'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: EdgeInsets.only(bottom: 16),
+                        itemCount: filteredTransactions.length,
+                        itemBuilder: (context, index) {
+                          return _buildTransactionItem(
+                            filteredTransactions[index],
+                          );
+                        },
+                      ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      }),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Get.toNamed('/create-transaction'),
+        onPressed: () async {
+          await Get.toNamed('/create-transaction');
+          // รีเฟรชข้อมูลเมื่อกลับจากหน้าสร้างรายการใหม่
+          _loadTransactions();
+        },
         backgroundColor: Colors.blueAccent,
         child: Icon(Icons.add, color: Colors.white),
       ),

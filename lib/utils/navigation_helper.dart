@@ -73,6 +73,11 @@ class NavigationHelper {
     }
   }
 
+  /// ไปหน้า Delete Transaction
+  static Future<void> toDeleteTransaction() async {
+    await toNamed(AppRoutes.deleteTransaction);
+  }
+
   // Utility methods
 
   /// แสดง SnackBar
